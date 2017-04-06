@@ -1,13 +1,16 @@
 package assignment4;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+
 
 public class Master implements IntMaster {
 	private static final ArrayList<String> workerIPs = new ArrayList<String>(
@@ -17,18 +20,22 @@ public class Master implements IntMaster {
 	private ArrayList<IntMapper> mapperNodes; // what to call when creating
 												// mapper and reducer tasks
 	private HashMap<String, IntMapper> mapperTasks; // the actual mapper tasks
+	private HashMap<String, Boolean> mapperTasksDone; // whether a Mapper Task is done or not
 	private ArrayList<IntReducer> reducerNodes; // what to call when creating
 												// mapper and reducer tasks
 	private HashMap<String, IntReducer> reducerTasks; // <word, reducerTaskStub>
-	private HashMap<String, Integer> results; // <word, count>
+	// private HashMap<String, Integer> results; // <word, count>
 	private IntMaster stub;
-
+	private File file;
+	
 	public Master() {
+		file = new File("wordfrequencies.txt");
 		mapperNodes = new ArrayList<IntMapper>();
 		reducerNodes = new ArrayList<IntReducer>();
 		mapperTasks = new HashMap<String, IntMapper>();
+		mapperTasksDone = new HashMap<String, Boolean>();
 		reducerTasks = new HashMap<String, IntReducer>();
-		results = new HashMap<String, Integer>();
+		// results = new HashMap<String, Integer>();
 		stub = null;
 	}
 
@@ -69,9 +76,33 @@ public class Master implements IntMaster {
 		// task and the remote object reference is sent to the mapper task
 		// b) if the key is assigned, the corresponding object is simply sent to
 		// the mapper task
-		results.put(key, value);
+		try {
+			PrintWriter writer = new PrintWriter(file);
+			writer.println(key+":"+"value");
+			writer.close();
+		} catch (Exception e) {
+			System.err.println("Master Exception - Cannot write file" + e.toString());
+			e.printStackTrace();
+		}
+		// results.put(key, value);
 	}
 
+	public void markMapperDone(String mapperName) {
+		mapperTasksDone.remove(mapperName);
+		// if all mappers are done send terminate message to reducers
+		if (mapperTasksDone.isEmpty()) {
+			for (String reducerName : reducerTasks.keySet()) {
+				IntReducer reducerStub = reducerTasks.get(reducerName);
+				try {
+					reducerStub.terminate();
+				} catch (Exception e) {
+					System.err.println("ReducerTask Exception - could not terminate" + e.toString());
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 	public static void main(String[] args) {
 		// Initialize master
 		Master master = new Master();
@@ -125,6 +156,7 @@ public class Master implements IntMaster {
 				IntMapper newMapTask = master.mapperNodes.get(count % numMappers).createMapTask(mapperName);
 				newMapTask.processInput(line, master.stub);
 				master.mapperTasks.put(mapperName, newMapTask);
+				master.mapperTasksDone.put(mapperName, false);
 				count++;
 			}
 			bufr.close();

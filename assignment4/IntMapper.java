@@ -1,9 +1,10 @@
 package assignment4;
 
-import java.rmi.*;
-import java.rmi.server.*;
+
+import java.rmi.AlreadyBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.*;
+
 
 public interface IntMapper extends Remote {
 	IntMapper createMapTask(String name) throws RemoteException, AlreadyBoundException;

@@ -48,8 +48,14 @@ public class Reducer implements IntReducer {
 	public int terminate() {
 		// 9.once the reducer is done, it sends its results to the master, and
 		// terminates
-
-		return -1;
+		try {
+			masterStub.receiveOutput(key, count);
+			return 1;
+		} catch (Exception e) {
+			System.err.println("Master Exception - Cannot read file" + e.toString());
+			e.printStackTrace();
+			return -1;
+		}
 	}
 
 	public static void main(String[] args) {
