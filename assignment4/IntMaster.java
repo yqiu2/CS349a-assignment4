@@ -1,12 +1,12 @@
-package a4;
+package assignment4;
 
-import java.rmi.*;
-import java.rmi.server.*;
+// import java.rmi.*;
+import java.nio.channels.AlreadyBoundException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.*;
+
 
 public interface IntMaster extends Remote {
 	IntReducer[] getReducers(String[] keys) throws RemoteException, AlreadyBoundException;
-	void markMapperDone() throws RemoteException;
 	void receiveOutput(String key, int value) throws RemoteException;
 }

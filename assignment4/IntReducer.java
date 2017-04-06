@@ -1,4 +1,4 @@
-package a4;
+package assignment4;
 
 import java.rmi.*;
 import java.rmi.server.*;
