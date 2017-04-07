@@ -1,4 +1,4 @@
-package assignment4;
+// package assignment4;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -18,7 +18,7 @@ public class Mapper implements IntMapper {
 			// Bind the remote object's stub in the registry
 			Registry registry = LocateRegistry.getRegistry();
 			registry.bind(name, mapStub);
-			System.out.println("");
+			System.out.println("new MapTask for "+ name);
 			return mapStub;
 		} catch (Exception e) {
 			System.err.println("Client exception(could not register Mapper task " + name + "): \n" + e.toString());
@@ -50,7 +50,9 @@ public class Mapper implements IntMapper {
 		// get reducers
 		try {
 			String[] words = outputs.keySet().toArray(new String[outputs.size()]);
+			System.out.println("got words.length = "+ words.length);
 			IntReducer[] reducers = theMaster.getReducers(words);
+			System.out.println("got "+ reducers.length+" IntReducers from master");
 			for (int i = 0; i < words.length; i++) {
 				reducers[i].receiveValues(outputs.get(words[i]));
 			}
@@ -65,6 +67,19 @@ public class Mapper implements IntMapper {
 		// 7. the mapper task directly contacs the corresponding reducer task,
 		// and sends to its
 		// locally stored word count, and terminates when done
+		Mapper mapManager = new Mapper();
+		// add to registry
+		try {
+			IntMapper mapManagerStub = (IntMapper) UnicastRemoteObject.exportObject(mapManager, 0);
+			// Bind the remote object's stub in the registry
+			Registry registry = LocateRegistry.getRegistry();
+			registry.bind("MapManager", mapManagerStub);
+			System.out.println("Started MapManager");
+		} catch (Exception e) {
+			System.err.println("Client exception(could not register MapManager \n" + e.toString());
+			e.printStackTrace();
+		}
+		
 	}
 
 }

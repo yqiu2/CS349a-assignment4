@@ -1,4 +1,4 @@
-package assignment4;
+// package assignment4;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -67,6 +67,18 @@ public class Reducer implements IntReducer {
 		// 9.once the reducer is done, it sends its results to the master, and
 		// terminates
 		//
+		Reducer reducerManager = new Reducer();
+		// add to registry
+		try {
+			IntReducer reducerManagerStub = (IntReducer) UnicastRemoteObject.exportObject(reducerManager, 0);
+			// Bind the remote object's stub in the registry
+			Registry registry = LocateRegistry.getRegistry();
+			registry.bind("ReduceManager", reducerManagerStub);
+			System.out.println("Started ReduceManager");
+		} catch (Exception e) {
+			System.err.println("Client exception(could not register ReduceManager \n" + e.toString());
+			e.printStackTrace();
+		}
 	}
 
 }

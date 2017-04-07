@@ -1,5 +1,4 @@
-package assignment4;
-
+// package assignment4;
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.Remote;

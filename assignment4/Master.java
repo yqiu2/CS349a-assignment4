@@ -1,4 +1,4 @@
-package assignment4;
+// package assignment4;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,8 +14,8 @@ import java.util.HashMap;
 
 public class Master implements IntMaster {
 	private static final ArrayList<String> workerIPs = new ArrayList<String>(
-			Arrays.asList("MAPPER_IP_1", "MAPPER_IP_2"));
-	final ArrayList<String> reducerIPs = new ArrayList<String>(Arrays.asList("REDUCER_IP_1", "REDUCER_IP_2"));
+			Arrays.asList("54.172.165.34", "52.91.9.237"));
+	// final ArrayList<String> reducerIPs = new ArrayList<String>(Arrays.asList("REDUCER_IP_1", "REDUCER_IP_2"));
 
 	private ArrayList<IntMapper> mapperNodes; // what to call when creating
 												// mapper and reducer tasks
@@ -44,7 +44,7 @@ public class Master implements IntMaster {
 	}
 
 	public IntReducer[] getReducers(String[] keys) {
-		IntReducer[] matchingReducers = new IntReducer[keys.length];
+		IntReducer[] matchingReducers = new IntReducer[keys.length+1];
 		for (int i = 0; i < keys.length; i++) {
 			String key = keys[i];
 			if (reducerTasks.containsKey(key)) {
