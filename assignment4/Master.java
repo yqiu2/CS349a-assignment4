@@ -27,7 +27,7 @@ public class Master implements IntMaster {
 	private ArrayList<IntReducer> reducerNodes; // what to call when creating
 												// mapper and reducer tasks
 	private HashMap<String, IntReducer> reducerTasks; // <word, reducerTaskStub>
-	private HashMap<IntReducer, Boolean> reducerTasksDone;
+	private HashMap<String, Boolean> reducerTasksDone;
 	// private HashMap<String, Integer> results; // <word, count>
 	private IntMaster stub;
 	private File file;
@@ -41,7 +41,7 @@ public class Master implements IntMaster {
 		mapperTasks = new HashMap<String, IntMapper>();
 		mapperTasksDone = new HashMap<String, Boolean>();
 		reducerTasks = new HashMap<String, IntReducer>();
-		reducerTasksDone = new HashMap<IntReducer, Boolean>();
+		reducerTasksDone = new HashMap<String, Boolean>();
 		// results = new HashMap<String, Integer>();
 		stub = null;
 		currentlyReading = false;
@@ -69,7 +69,7 @@ public class Master implements IntMaster {
 				try {
 					newReducerTask = reducerNode.createReduceTask(key, this.stub);
 					reducerTasks.put(key, newReducerTask);
-					reducerTasksDone.put(newReducerTask, false);
+					reducerTasksDone.put(key, false);
 					matchingReducers[i] = newReducerTask;
 				} catch (Exception e) {
 					System.err.println("Client exception(could not add reducerTask): " + e.toString());
@@ -86,16 +86,18 @@ public class Master implements IntMaster {
 			System.out.println("writing to file: " + key + ":" + value);
 			writer.println(key + ":" + value);
 			// writer.close();
-			reducerTasks.remove(key);
+			synchronized(reducerTasksDone){
+				reducerTasksDone.remove(key);
+			}
 			/*
-			 * if (mapperTasksDone.isEmpty() && reducerTasks.isEmpty() &&
+			 * if (mapperTasksDone.isEmpty() && reducerTasksDone.isEmpty() &&
 			 * !currentlyReading) { writer.close(); }
 			 */ } catch (Exception e) {
 			System.err.println("Master Exception - Cannot write file" + e.toString());
 			e.printStackTrace();
 		}
 		// results.put(key, value);
-		reducerTasks.remove(key);
+		// reducerTasks.remove(key);
 		/*
 		 * if (mapperTasksDone.isEmpty() && reducerTasks.isEmpty() &&
 		 * !currentlyReading) { boolean reducersAllFinished = true; for
@@ -185,22 +187,27 @@ public class Master implements IntMaster {
 			master.currentlyReading = false;
 
 			while (!master.mapperTasksDone.isEmpty()) {
+				System.out.println("mappers not done");
 			}
+			synchronized(master.reducerTasks){
 			System.out.println("all mappers are done send terminate message to reducers");
 			for (String reducerName : master.reducerTasks.keySet()) {
 				IntReducer reducerStub = master.reducerTasks.get(reducerName);
 				try {
+					System.out.println("sending terminate to " + reducerName);
 					reducerStub.terminate();
 				} catch (Exception e) {
 					System.err.println("ReducerTask Exception - could not terminate" + e.toString());
 					e.printStackTrace();
 				}
 			}
-
-			if (master.mapperTasksDone.isEmpty() && master.reducerTasks.isEmpty() && !master.currentlyReading) {
+			}
+			synchronized(master.reducerTasks){
+			if (master.mapperTasksDone.isEmpty() && master.reducerTasksDone.isEmpty() && !master.currentlyReading) {
+				System.out.println("finished, closing and writing file");
 				master.writer.close();
 			}
-
+			}
 		} catch (Exception e) {
 			System.err.println("Master Exception - Cannot read file" + e.toString());
 			e.printStackTrace();
