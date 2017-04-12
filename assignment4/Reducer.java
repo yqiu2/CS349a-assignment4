@@ -32,27 +32,31 @@ public class Reducer implements IntReducer {
 			// Bind the remote object's stub in the registry
 			Registry registry = LocateRegistry.getRegistry();
 			registry.bind("R" + key, reducerStub);
-			System.out.println("");
+			System.out.println("R: created Reducer R"+key);
 			return reducerStub;
 		} catch (Exception e) {
-			System.err.println("Client exception(could not register Reducer task " + key + "): \n" + e.toString());
+			System.err.println("R: Client exception(could not register Reducer task " + key + "): \n" + e.toString());
 			e.printStackTrace();
 			return null;
 		}
 
 	}
+	
 	public void receiveValues(int value) {
+		System.out.println(key+" + "+value);
 		count += value;
 	}
 
 	public int terminate() {
 		// 9.once the reducer is done, it sends its results to the master, and
 		// terminates
+		System.out.println("R: terminating Reducer: "+ key);
 		try {
+			System.out.println("R: Send to Master: "+ key + " v: "+ count);
 			masterStub.receiveOutput(key, count);
 			return 1;
 		} catch (Exception e) {
-			System.err.println("Master Exception - Cannot read file" + e.toString());
+			System.err.println("R: Master Exception - Cannot read file" + e.toString());
 			e.printStackTrace();
 			return -1;
 		}
@@ -74,9 +78,9 @@ public class Reducer implements IntReducer {
 			// Bind the remote object's stub in the registry
 			Registry registry = LocateRegistry.getRegistry();
 			registry.bind("ReduceManager", reducerManagerStub);
-			System.out.println("Started ReduceManager");
+			System.out.println("R: Started ReduceManager");
 		} catch (Exception e) {
-			System.err.println("Client exception(could not register ReduceManager \n" + e.toString());
+			System.err.println("R: Client exception(could not register ReduceManager \n" + e.toString());
 			e.printStackTrace();
 		}
 	}

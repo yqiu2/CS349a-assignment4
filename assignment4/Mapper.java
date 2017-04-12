@@ -6,22 +6,24 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 
 public class Mapper implements IntMapper {
-
+	private String mapperName;
 	public Mapper() {
+		this.mapperName = "";
 	}
 
 	public IntMapper createMapTask(String name) {
 		Mapper mapTask = new Mapper();
+		mapTask.mapperName = name;
 		// add to registry
 		try {
 			IntMapper mapStub = (IntMapper) UnicastRemoteObject.exportObject(mapTask, 0);
 			// Bind the remote object's stub in the registry
 			Registry registry = LocateRegistry.getRegistry();
 			registry.bind(name, mapStub);
-			System.out.println("new MapTask for "+ name);
+			System.out.println("M: new MapTask for "+ name);
 			return mapStub;
 		} catch (Exception e) {
-			System.err.println("Client exception(could not register Mapper task " + name + "): \n" + e.toString());
+			System.err.println("M: Client exception(could not register Mapper task " + name + "): \n" + e.toString());
 			e.printStackTrace();
 			return null;
 		}
@@ -33,7 +35,7 @@ public class Mapper implements IntMapper {
 		// 4. then it contacts the master to get the addresses of the reducers
 		// in
 		// charge of each key it generated
-		input = input.replaceAll("[^A-Za-z]", "");
+		input = input.replaceAll("[^A-Za-z\\s]", "");
 		input = input.toLowerCase();
 		String[] tokens = input.split("[ ]+");
 		HashMap<String, Integer> outputs = new HashMap<String, Integer>();
@@ -50,14 +52,17 @@ public class Mapper implements IntMapper {
 		// get reducers
 		try {
 			String[] words = outputs.keySet().toArray(new String[outputs.size()]);
-			System.out.println("got words.length = "+ words.length);
+			System.out.println("M: getting reducers for "+ input);
 			IntReducer[] reducers = theMaster.getReducers(words);
-			System.out.println("got "+ reducers.length+" IntReducers from master");
+			System.out.println("M: got "+ reducers.length+" IntReducers from master for" + input);
 			for (int i = 0; i < words.length; i++) {
 				reducers[i].receiveValues(outputs.get(words[i]));
 			}
+			System.out.println("M: calling MarkMapperDone("+ this.mapperName);
+			theMaster.markMapperDone(this.mapperName);
+	
 		} catch (Exception e) {
-			System.err.println("Master Exception (could not get reducers from master)" + e.toString());
+			System.err.println("M:Master Exception (could not get reducers from master)" + e.toString());
 			e.printStackTrace();
 		}
 
@@ -74,9 +79,9 @@ public class Mapper implements IntMapper {
 			// Bind the remote object's stub in the registry
 			Registry registry = LocateRegistry.getRegistry();
 			registry.bind("MapManager", mapManagerStub);
-			System.out.println("Started MapManager");
+			System.out.println("M: Started MapManager");
 		} catch (Exception e) {
-			System.err.println("Client exception(could not register MapManager \n" + e.toString());
+			System.err.println("M: Client exception(could not register MapManager \n" + e.toString());
 			e.printStackTrace();
 		}
 		
