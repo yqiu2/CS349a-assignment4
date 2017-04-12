@@ -1,16 +1,11 @@
-// package assignment4;
-
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
-//import java.rmi.AlreadyBoundException;
-//import java.rmi.RemoteException;
-
 public class Reducer implements IntReducer {
 	String key;
 	IntMaster masterStub;
-	int count; 
+	int count;
 
 	public Reducer() { // starting reducerMangaer
 		this.key = "";
@@ -32,7 +27,7 @@ public class Reducer implements IntReducer {
 			// Bind the remote object's stub in the registry
 			Registry registry = LocateRegistry.getRegistry();
 			registry.bind("R" + key, reducerStub);
-			System.out.println("R: created Reducer R"+key);
+			System.out.println("R: created Reducer R" + key);
 			return reducerStub;
 		} catch (Exception e) {
 			System.err.println("R: Client exception(could not register Reducer task " + key + "): \n" + e.toString());
@@ -41,18 +36,18 @@ public class Reducer implements IntReducer {
 		}
 
 	}
-	
+
 	public void receiveValues(int value) {
-		System.out.println(key+" + "+value);
+		System.out.println("R: " + key + " + " + value);
 		count += value;
 	}
 
 	public int terminate() {
 		// 9.once the reducer is done, it sends its results to the master, and
 		// terminates
-		System.out.println("R: terminating Reducer: "+ key);
+		System.out.println("R: terminating Reducer: " + key);
 		try {
-			System.out.println("R: Send to Master: "+ key + " v: "+ count);
+			System.out.println("R: Send to Master: " + key + " v: " + count);
 			masterStub.receiveOutput(key, count);
 			return 1;
 		} catch (Exception e) {
@@ -63,14 +58,6 @@ public class Reducer implements IntReducer {
 	}
 
 	public static void main(String[] args) {
-		// 6. when a reducer task is started, it's in charge of counting the
-		// frequency of occurrence of a specific key word
-		// 8. the reducer task keeps adding to the frequency count of the key
-		// word,
-		// until all mapper tasks are done
-		// 9.once the reducer is done, it sends its results to the master, and
-		// terminates
-		//
 		Reducer reducerManager = new Reducer();
 		// add to registry
 		try {

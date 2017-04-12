@@ -1,6 +1,3 @@
-
-// package assignment4;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,10 +11,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 public class Master implements IntMaster {
+	// *******************************************
+	// Please change workerIPs when changing workerIPs
+	// *******************************************
 	private static final ArrayList<String> workerIPs = new ArrayList<String>(
 			Arrays.asList("54.172.165.34", "52.91.9.237"));
-	// final ArrayList<String> reducerIPs = new
-	// ArrayList<String>(Arrays.asList("REDUCER_IP_1", "REDUCER_IP_2"));
 
 	private ArrayList<IntMapper> mapperNodes; // what to call when creating
 												// mapper and reducer tasks
@@ -86,43 +84,20 @@ public class Master implements IntMaster {
 			System.out.println("writing to file: " + key + ":" + value);
 			writer.println(key + ":" + value);
 			// writer.close();
-			synchronized(reducerTasksDone){
+			synchronized (reducerTasksDone) {
 				reducerTasksDone.remove(key);
 			}
-			/*
-			 * if (mapperTasksDone.isEmpty() && reducerTasksDone.isEmpty() &&
-			 * !currentlyReading) { writer.close(); }
-			 */ } catch (Exception e) {
+		} catch (Exception e) {
 			System.err.println("Master Exception - Cannot write file" + e.toString());
 			e.printStackTrace();
 		}
-		// results.put(key, value);
-		// reducerTasks.remove(key);
-		/*
-		 * if (mapperTasksDone.isEmpty() && reducerTasks.isEmpty() &&
-		 * !currentlyReading) { boolean reducersAllFinished = true; for
-		 * (IntReducer reducer : reducerTasksDone.keySet()) { Boolean
-		 * reducerDone = reducerTasksDone.get(reducer); if (!reducerDone) {
-		 * reducersAllFinished = false; } } if (reducersAllFinished) {
-		 * writer.close(); } }
-		 */
+
 	}
 
 	public void markMapperDone(String mapperName) {
 		System.out.println("calling mark Master done, removing " + mapperName + " from " + mapperTasksDone.keySet());
 		mapperTasksDone.remove(mapperName);
 		System.out.println("calling mark Master done, removed " + mapperName + " from " + mapperTasksDone.keySet());
-
-		// if all mappers are done send terminate message to reducers
-		/*
-		 * if (mapperTasksDone.isEmpty() && !currentlyReading) { System,out.
-		 * println("all mappers are done send terminate message to reducers");
-		 * for (String reducerName : reducerTasks.keySet()) { IntReducer
-		 * reducerStub = reducerTasks.get(reducerName); try {
-		 * reducerStub.terminate(); } catch (Exception e) {
-		 * System.err.println("ReducerTask Exception - could not terminate" +
-		 * e.toString()); e.printStackTrace(); } } }
-		 */
 	}
 
 	public static void main(String[] args) {
@@ -186,35 +161,35 @@ public class Master implements IntMaster {
 			bufr.close();
 			master.currentlyReading = false;
 
+			// master checks that the mappers are done
 			while (!master.mapperTasksDone.isEmpty()) {
 				System.out.println("mappers not done");
 			}
-			synchronized(master.reducerTasks){
-			System.out.println("all mappers are done send terminate message to reducers");
-			for (String reducerName : master.reducerTasks.keySet()) {
-				IntReducer reducerStub = master.reducerTasks.get(reducerName);
-				try {
-					System.out.println("sending terminate to " + reducerName);
-					reducerStub.terminate();
-				} catch (Exception e) {
-					System.err.println("ReducerTask Exception - could not terminate" + e.toString());
-					e.printStackTrace();
+			synchronized (master.reducerTasks) {
+				System.out.println("all mappers are done send terminate message to reducers");
+				for (String reducerName : master.reducerTasks.keySet()) {
+					IntReducer reducerStub = master.reducerTasks.get(reducerName);
+					try {
+						System.out.println("sending terminate to " + reducerName);
+						reducerStub.terminate();
+					} catch (Exception e) {
+						System.err.println("ReducerTask Exception - could not terminate" + e.toString());
+						e.printStackTrace();
+					}
 				}
 			}
-			}
-			synchronized(master.reducerTasks){
-			if (master.mapperTasksDone.isEmpty() && master.reducerTasksDone.isEmpty() && !master.currentlyReading) {
-				System.out.println("finished, closing and writing file");
-				master.writer.close();
-			}
+
+			// mapper checks that the reducers are done
+			synchronized (master.reducerTasks) {
+				if (master.mapperTasksDone.isEmpty() && master.reducerTasksDone.isEmpty() && !master.currentlyReading) {
+					System.out.println("finished, closing and writing file");
+					master.writer.close();
+				}
 			}
 		} catch (Exception e) {
 			System.err.println("Master Exception - Cannot read file" + e.toString());
 			e.printStackTrace();
 		}
-
-		// 9.the master stores all the results received from all reducers
-		// to an output file, and terminates
 
 	}
 
